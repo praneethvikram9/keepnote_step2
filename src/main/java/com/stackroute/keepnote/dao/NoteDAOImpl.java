@@ -1,10 +1,14 @@
 package com.stackroute.keepnote.dao;
-
 import java.util.List;
-
+import org.hibernate.Criteria;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-
 import com.stackroute.keepnote.model.Note;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+import javax.persistence.criteria.CriteriaQuery;
+import javax.transaction.Transactional;
 
 /*
  * This class is implementing the NoteDAO interface. This class has to be annotated with @Repository
@@ -16,14 +20,21 @@ import com.stackroute.keepnote.model.Note;
  * 					context.  
  * */
 
+@Repository("NoteDAO")
+@Transactional
 public class NoteDAOImpl implements NoteDAO {
 
 	/*
 	 * Autowiring should be implemented for the SessionFactory.
 	 */
 
-	public NoteDAOImpl(SessionFactory sessionFactory) {
 
+
+	@Autowired
+	private SessionFactory sessionFactory;
+	private Session session;
+	public NoteDAOImpl(SessionFactory sessionFactory) {
+		this.sessionFactory = sessionFactory;
 	}
 
 	/*
@@ -31,7 +42,10 @@ public class NoteDAOImpl implements NoteDAO {
 	 */
 
 	public boolean saveNote(Note note) {
-		return false;
+		session =sessionFactory.getCurrentSession();
+		System.out.println(note.toString());
+		session.persist(note);
+		return true;
 
 	}
 
@@ -40,7 +54,11 @@ public class NoteDAOImpl implements NoteDAO {
 	 */
 
 	public boolean deleteNote(int noteId) {
-		return false;
+		System.out.println(getNoteById(noteId).toString());
+			session=sessionFactory.getCurrentSession();
+			session.delete(getNoteById(noteId));
+			return true;
+
 
 	}
 
@@ -48,8 +66,15 @@ public class NoteDAOImpl implements NoteDAO {
 	 * retrieve all existing notes sorted by created Date in descending
 	 * order(showing latest note first)
 	 */
+
 	public List<Note> getAllNotes() {
-		return null;
+		session =sessionFactory.getCurrentSession();
+		CriteriaQuery<Note> criteriaQuery = session.getCriteriaBuilder().createQuery(Note.class);
+		criteriaQuery.from(Note.class);
+		List<Note> list = session.createQuery(criteriaQuery).getResultList();
+		//Criteria criteria=session.createCriteria(Note.class);
+		System.out.println("list ofdd "+list);
+		return list;
 
 	}
 
@@ -57,15 +82,23 @@ public class NoteDAOImpl implements NoteDAO {
 	 * retrieve specific note from the database(note) table
 	 */
 	public Note getNoteById(int noteId) {
-		return null;
+
+		return sessionFactory.getCurrentSession().get(Note.class,noteId);
 
 	}
 
 	/* Update existing note */
 
 	public boolean UpdateNote(Note note) {
+		System.out.println(note.toString());
+		Note note1=getNoteById(note.getNoteId());
+		if(note1!=null){
+			note1.setNoteTitle(note.getNoteTitle());
+			note1.setNoteContent(note.getNoteContent());
+			note1.setNoteStatus(note.getNoteStatus());
+			return true;
+		}
 		return false;
-
 	}
 
 }
